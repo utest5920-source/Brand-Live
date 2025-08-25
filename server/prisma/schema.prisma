@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  role               Role               @default(USER)
+  name               String?            
+  profilePictureUrl  String?
+  designation        String?
+  birthdate          DateTime?
+  gender             String?
+  phoneNumber        String             @unique
+  email              String?            @unique
+  city               String?
+  subscription       String?            // status or plan name
+  subscriptionPlanDetails String?
+  referralCode       String             @unique
+  referredById       String?
+  referredBy         User?              @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals          User[]             @relation("UserReferrals")
+
+  businessProfile    BusinessProfile?
+  politicalProfile   PoliticalProfile?
+  images             Image[]
+}
+
+enum Role {
+  ADMIN
+  USER
+  BUSINESS
+  POLITICIAN
+}
+
+model OtpRequest {
+  id         String   @id @default(cuid())
+  phone      String
+  code       String
+  expiresAt  DateTime
+  isUsed     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([phone])
+  @@index([phone, code])
+}
+
+model BusinessCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  frames    BusinessFrame[]
+  businessProfiles BusinessProfile[]
+}
+
+model BusinessProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  categoryId    String?
+  category      BusinessCategory? @relation(fields: [categoryId], references: [id])
+  name          String?
+  logoUrl       String?
+  email         String?
+  address       String?
+  phone1        String?
+  phone2        String?
+  website       String?
+  frameId       String?
+  frame         BusinessFrame? @relation(fields: [frameId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BusinessFrame {
+  id           String   @id @default(cuid())
+  name         String
+  imageUrl     String
+  categoryId   String?
+  category     BusinessCategory? @relation(fields: [categoryId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  businessProfiles BusinessProfile[]
+}
+
+model PoliticalProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  designation   String?
+  party         String?
+  number        String?
+  email         String?
+  website       String?
+  address       String?
+  frameId       String?
+  frame         PoliticalFrame? @relation(fields: [frameId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PoliticalFrame {
+  id           String   @id @default(cuid())
+  name         String
+  imageUrl     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  politicalProfiles PoliticalProfile[]
+}
+
+model ImageCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  images    Image[]
+}
+
+model Image {
+  id            String        @id @default(cuid())
+  categoryId    String
+  category      ImageCategory @relation(fields: [categoryId], references: [id])
+  title         String?
+  fileUrl       String
+  createdById   String?
+  createdBy     User?         @relation(fields: [createdById], references: [id])
+  createdAt     DateTime      @default(now())
+}
+
+model Advertisement {
+  id          String        @id @default(cuid())
+  type        AdType
+  title       String
+  mediaUrl    String
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+}
+
+enum AdType {
+  POPUP_IMAGE
+  POPUP_VIDEO
+  STORY
+}
